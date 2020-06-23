@@ -1,0 +1,5 @@
+__pycache__
+.vs
+chat_states.json
+groupmatrix.json
+bot_properties.json
