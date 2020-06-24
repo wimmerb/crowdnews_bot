@@ -67,9 +67,9 @@ async def do_join_group(message: types.Message):
         backend.default_state_for_message(message)
     #TODO public groups
     await bot.send_message(message.chat.id, 
-                           'Please send me an id for the group you want to join or choose from public groups!',
+                           'Please send me an id for the group you want to join or try one of our community\'s public groups!',
                            #backend.get public groups
-                           reply_markup = types.ReplyKeyboardRemove())
+                           reply_markup = backend.create_keyboard(backend.get_public_group_ids()))
     backend.set_phase_for_message(message, Phase.join_group)
     pass
 

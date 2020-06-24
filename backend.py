@@ -220,6 +220,13 @@ def set_targeted_group(message: types.Message, targeted_group: string):
     dump_string()
     return
 
+def get_public_group_ids():
+    print([group_id for group_id, info in groupid_to_group.items() 
+            if info['is_private'] == 'no'])
+    return [group_id for group_id, info in groupid_to_group.items() 
+            if info['is_private'] == 'no']
+
+
 
 def default_state_for_message(message: types.Message):
     chat_states[str(message.chat.id)]['message_ids'] = []
