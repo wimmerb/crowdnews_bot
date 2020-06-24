@@ -11,6 +11,8 @@ import backend
 import asyncio
 from functools import reduce
 
+#HALLO von AWS
+
 with open("bot_properties.json") as f:
     API_TOKEN = json.load(f)["api_token"]
     
