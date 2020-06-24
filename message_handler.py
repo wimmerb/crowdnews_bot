@@ -46,6 +46,8 @@ async def do_abort(message: types.Message):
                            reply_markup = types.ReplyKeyboardRemove())
     backend.default_state_for_message(message)
 
+
+#AnyPhase -> new_group -> new_group_info -> desired_weekday -> desired_hour -> desired_period -> desired_privacy
 @dp.message_handler(regexp = "/newgroup")
 async def do_create_group(message: types.Message):
     if not backend.get_phase_from_message(message) in [Phase.default]:
@@ -55,6 +57,7 @@ async def do_create_group(message: types.Message):
                            reply_markup = types.ReplyKeyboardRemove())
     backend.set_phase_for_message(message, Phase.new_group)
     pass
+
 
 @dp.message_handler(regexp = "/joingroup")
 async def do_join_group(message: types.Message):
@@ -205,15 +208,29 @@ async def do_handle_free_text_message(message: types.Message):
         return
     elif backend.get_phase_from_message(message) == Phase.new_group_desired_period:
         #erstelle neue Gruppe
-        if not backend.is_hour(message):
+        if not backend.is_proper_period(message):
             await bot.send_message(message.chat.id,
                                    f"Please send me a number between 1 and 365 to determine the post-frequency in this group.",
                                    reply_markup = backend.create_keyboard(range(1, 8)))
+            return
+        await bot.send_message(message.chat.id,
+                               f"Alright. I will send these groups updates every {str(message.text)} days. Do you want this group to be private? Private groups will not be suggested to new users of this bot.",
+                               reply_markup = backend.create_keyboard(['yes', 'no']))
+        backend.set_desired_group_period(message, str(message.text))
+        backend.set_phase_for_message(message, Phase.new_group_desired_privacy)
+        return
+        
+    elif backend.get_phase_from_message(message) == Phase.new_group_desired_privacy:
+        if not str(message.text) in ['yes', 'no']:
+            await bot.send_message(message.chat.id,
+                                   f"Please send a yes/no answer.",
+                                   reply_markup = backend.create_keyboard(['yes', 'no']))
             return
         group_id = backend.create_group(backend.get_desired_group_name(message), 
                                         backend.get_desired_group_info(message),
                                         backend.get_desired_group_weekday(message),
                                         backend.get_desired_group_hour(message),
+                                        backend.get_desired_group_period(message),
                                         message.text, 
                                         str(message.chat.id))
         #TODO group_id kann None sein
@@ -226,6 +243,7 @@ async def do_handle_free_text_message(message: types.Message):
                                reply_markup = types.ReplyKeyboardRemove())
         backend.default_state_for_message(message)
         return
+
 
     elif backend.get_phase_from_message(message) == Phase.add_messages:
         #erwarte Nachrichten, bleib in Phase

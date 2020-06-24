@@ -1,0 +1,1 @@
+show public groups to new members, better help screen, delete/leave 

@@ -31,6 +31,7 @@ def create_group(group_name: str,
                  desired_weekday: str, 
                  desired_hour: str,
                  desired_period: str,
+                 desired_privacy: str,
                  admin_chatid: str):
     def create_groupid():
         #Todo check for loophole
@@ -44,6 +45,7 @@ def create_group(group_name: str,
                                     'update_period': desired_period,
                                     'update_due': create_initial_date(desired_weekday, 
                                                                       desired_hour),
+                                    'is_private' : desired_privacy,
                                     'posted_messages': defaultdict(lambda: defaultdict(list))
                                     }
     chatid_to_groupids[admin_chatid].add(group_id)
@@ -99,6 +101,7 @@ def create_initial_date(weekday: str, hour: Union[str, int]) -> str:
     onDay = lambda date, day: date + timedelta(days=(day-date.weekday()+7)%7)
     ret = onDay(datetime.now(), weekdays.get(weekday, 0))
     ret = ret.replace(microsecond=0, second=0, minute=0, hour = int(hour))
+    ret = ret + timedelta(days = 7) if datetime.now() > ret else ret
     print(ret)
     return str(ret)
 
@@ -130,6 +133,7 @@ class Phase():
     new_group_desired_weekday = 'new_group_desired_day'
     new_group_desired_hour = 'new_group_desired_hour'
     new_group_desired_period = 'new_group_desired_period'
+    new_group_desired_privacy = 'new_group_desired_privacy'
     add_messages = 'add_messages'
     send_to_groups = 'send_to_groups'
     delete_group = 'delete_group'
@@ -200,6 +204,14 @@ def set_desired_group_hour(message: types.Message, desired_group_hour: str):
 def get_desired_group_hour(message: types.Message):
     return chat_states[str(message.chat.id)].setdefault('desired_group_hour', None)
 
+def set_desired_group_period(message: types.Message, desired_group_period: str):
+    chat_states[str(message.chat.id)]['desired_group_period'] = desired_group_period
+    dump_string()
+    return
+
+def get_desired_group_period(message: types.Message):
+    return chat_states[str(message.chat.id)].setdefault('desired_group_period', None)
+
 def get_targeted_group(message: types.Message):
     return chat_states[str(message.chat.id)].setdefault('targeted_group', None)
 
@@ -216,6 +228,7 @@ def default_state_for_message(message: types.Message):
     chat_states[str(message.chat.id)]['desired_group_info'] = None
     chat_states[str(message.chat.id)]['desired_group_weekday'] = None
     chat_states[str(message.chat.id)]['desired_group_hour'] = None
+    chat_states[str(message.chat.id)]['desired_group_period'] = None
     chat_states[str(message.chat.id)]['targeted_group'] = None
     chat_states[str(message.chat.id)]['phase'] = Phase.default
     
@@ -232,7 +245,7 @@ def update_due_groups(group_ids: List[str]):
     for group_id in group_ids:
         group = groupid_to_group[group_id]
         group['update_due'] = (str(datetime.strptime(group['update_due'],  '%Y-%m-%d %H:%M:%S')
-                                  + timedelta(minutes = int(group['update_period']))))
+                                  + timedelta(days = int(group['update_period']))))
         dump_string()
     return
 
