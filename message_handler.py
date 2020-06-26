@@ -205,7 +205,7 @@ async def do_handle_free_text_message(message: types.Message):
                                    reply_markup = backend.create_keyboard(range(1, 8)))
             return
         await bot.send_message(message.chat.id,
-                               f"Alright. I will post new content to this group every {str(message.text)+' days' if str(message.txt) != 1 else 'daily'}.\nDo you want this group to be private? Private groups will not be suggested to new users of this bot.",
+                               f"Alright. I will post new content to this group {'every ' + str(message.text)+' days' if str(message.text) != '1' else 'daily'}.\nDo you want this group to be private? Private groups will not be suggested to new users of this bot.",
                                reply_markup = backend.create_keyboard(['yes', 'no']))
         backend.set_desired_group_period(message, str(message.text))
         backend.set_phase_for_message(message, Phase.new_group_desired_privacy)
