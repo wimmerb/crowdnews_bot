@@ -99,7 +99,7 @@ async def do_add(message: types.Message):
     if not backend.get_phase_from_message(message) in [Phase.default]:
         backend.default_state_for_message(message)
     await bot.send_message(message.chat.id, 
-                           'Please send the message(s) you want your friends to see! When you are done, finish with /done.',
+                           'Please send the message block you want your friends to receive! \nWhen you are done, finish with /done.',
                             reply_markup = backend.create_keyboard(["/done" , "/abort"]))
                            
     backend.set_phase_for_message(message, Phase.add_messages)
@@ -111,12 +111,12 @@ async def do_done(message: types.Message):
 
     if backend.get_phase_from_message(message) == Phase.add_messages:
         if backend.get_sent_message_ids_from_message(message) != []:
-            await bot.send_message(message.chat.id, "Alright. Now let's select the group(s) you want to post this to. After the selection, finish with /done.", 
+            await bot.send_message(message.chat.id, "Alright. Now let's select the group(s) you want to post this to. \nAfter the selection, finish with /done.", 
                                    reply_markup = backend.create_keyboard(backend.get_groupids_for_chatid(str(message.chat.id)) + ["/done", "/abort"]))
             backend.set_phase_for_message(message, Phase.send_to_groups)
         else:
             await bot.send_message(message.chat.id, 
-                                   "Please send some content before you proceed with /done. If you have decided otherwise, you can use /abort.",
+                                   "A message block must consist of at least one message. \nPlease send some content before you proceed with /done. \nIf you have decided otherwise, you can use /abort.",
                                     reply_markup = backend.create_keyboard(["/done" , "/abort"]))
         return
     elif backend.get_phase_from_message(message) == Phase.send_to_groups:
@@ -134,33 +134,17 @@ async def do_done(message: types.Message):
             backend.default_state_for_message(message)        
         else:
             await bot.send_message(message.chat.id, 
-                                   "Please send at least one group ID before you proceed with /done. If you have decided otherwise, you can use /abort.", 
+                                   "Please send at least one group ID before you proceed with /done. \nIf you have decided otherwise, you can use /abort.", 
                                    reply_markup = backend.create_keyboard(backend.get_groupids_for_chatid(str(message.chat.id)) + ["/done", "/abort"]))
         return
     else:
         #TODO /done bei Gruppe ohne Name: spezifischer
         await bot.send_message(message.chat.id, 
-                               'Hmm. Unfortunately I don\'t understand. /done is used when e.g. posting messages to a group, but not here. Maybe you could use some /help?',
+                               'Hmm. Unfortunately I don\'t understand. /done is used when e.g. posting messages to a group, but not here. \nMaybe you could use some /help?',
                                reply_markup = backend.create_keyboard(["/help"]))
         backend.default_state_for_message(message)
         return
         #todos
-
-#TODO weg damit
-@dp.message_handler(regexp = "/pop")
-async def do_pop (message: types.Message):
-    for group_id in backend.groupid_to_group.keys():
-        message_to_send = backend.pop_message_from_group(group_id)
-        if message_to_send is None:
-            #ask to be fed
-            return
-        else:
-            from_chat_id, msg_list = message_to_send
-            for message_id in msg_list:
-                for chat_id in backend.get_chatids_for_groupid(group_id):
-                    await bot.forward_message(chat_id, from_chat_id, message_id)
-
-
 
 
 
@@ -170,7 +154,7 @@ async def do_handle_free_text_message(message: types.Message):
         #erwarte gruppenname, dann nächste phase
         #TODO prüfe Message-Type
         await bot.send_message(message.chat.id, 
-                               'What a wonderful name for a group! Please send me a message with group info.',
+                               'What a wonderful name for a group! \nPlease send me a message with group info.',
                                reply_markup = backend.create_keyboard(['/abort']))
         backend.set_desired_group_name(message, message.text)
         backend.set_phase_for_message(message, Phase.new_group_info)
@@ -179,7 +163,7 @@ async def do_handle_free_text_message(message: types.Message):
         #erwarte Textblock, dann nächste Phase
         #TODO prüfe Message-Type
         await bot.send_message(message.chat.id, 
-                               'Alright. Please select next on which day of the week the bot shall start to post messages.',
+                               'Alright. \nPlease select next on which day of the week the bot shall start posting content.',
                                reply_markup = backend.get_weekday_keyboard())
         backend.set_desired_group_info(message, message.text)
         backend.set_phase_for_message(message, Phase.new_group_desired_weekday)
@@ -191,7 +175,7 @@ async def do_handle_free_text_message(message: types.Message):
                                    reply_markup = backend.get_weekday_keyboard())
             return
         await bot.send_message(message.chat.id,
-                               'Great. Please enter the time of day (in Berlin time) the bot is going to post messages this group',
+                               'Great. Please enter the time of day (in Berlin time) when you want me to post to this group',
                                reply_markup = backend.create_keyboard(range(24)))
         backend.set_desired_group_weekday(message, message.text)
         backend.set_phase_for_message(message, Phase.new_group_desired_hour)
@@ -216,7 +200,7 @@ async def do_handle_free_text_message(message: types.Message):
                                    reply_markup = backend.create_keyboard(range(1, 8)))
             return
         await bot.send_message(message.chat.id,
-                               f"Alright. I will send these groups updates every {str(message.text)} days. Do you want this group to be private? Private groups will not be suggested to new users of this bot.",
+                               f"Alright. I will post new content to this group every {str(message.text)+' days' if str(message.txt) != 1 else 'daily'}.\nDo you want this group to be private? Private groups will not be suggested to new users of this bot.",
                                reply_markup = backend.create_keyboard(['yes', 'no']))
         backend.set_desired_group_period(message, str(message.text))
         backend.set_phase_for_message(message, Phase.new_group_desired_privacy)
@@ -237,7 +221,7 @@ async def do_handle_free_text_message(message: types.Message):
                                         str(message.chat.id))
         #TODO group_id kann None sein
         await bot.send_message(message.chat.id, 
-                               'The group has been created successfully. Here\'s your group ID:')
+                               'The group has been created successfully. \nHere\'s your group ID:')
         await bot.send_message(message.chat.id,  
                                f'{group_id}')
         await bot.send_message(message.chat.id, 
@@ -269,14 +253,14 @@ async def do_handle_free_text_message(message: types.Message):
                                    reply_markup = types.ReplyKeyboardRemove())
         else:
             await bot.send_message(message.chat.id, 
-                                   f'Something went wrong. Maybe the group {message.text} does not exist or the name was in the wrong format. Make sure it looks like this: abcd#1234',
+                                   f'Something went wrong. Maybe the group {message.text} does not exist or the name was in the wrong format. \nMake sure it looks like this: abcd#1234',
                                    reply_markup = types.ReplyKeyboardRemove())
         backend.default_state_for_message(message)
         return
     #TODO: handle ALL Phases including default
     else:
         await bot.send_message(message.chat.id, 
-                               'I do not understand what you are saying. Try typing /help for some instructions.',
+                               'I do not understand what you are saying. \nTry typing /help for some instructions.',
                                reply_markup = types.ReplyKeyboardRemove())
         backend.default_state_for_message(message)
 
@@ -291,7 +275,7 @@ async def post_messages():
             if to_post is None:
                 for rcv_id in backend.get_chatids_for_groupid(group_id):
                     await bot.send_message(rcv_id, 
-                                           f"😕\nUnfortunately, your group {group_id} is out of new messages... Use /add to post some new content to this group",
+                                           f"😕\nUnfortunately, your group {group_id} is out of new messages... \nUse /add to post some new content to this group",
                                            reply_markup = backend.create_keyboard(["/add"]))
                     await asyncio.sleep(0.5)
             else:
