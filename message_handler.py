@@ -9,6 +9,12 @@ from backend import Phase
 import backend
 import asyncio
 from functools import reduce
+import signal, sys
+
+def sigterm_handler(_signo, _stack_frame):
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, sigterm_handler)
 
 #HALLO von AWS
 
@@ -301,4 +307,5 @@ if __name__ == '__main__':
         #asyncio.create_task(loop.run_in_executor(exec, funny_aio))
     finally:
         #to_string()
+        print(f"entered 'finally' block")
         backend.dump_string()
