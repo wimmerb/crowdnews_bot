@@ -9,6 +9,8 @@ from collections import defaultdict
 from aiogram import types
 from JSON_helper import setify, listify
 
+now = lambda: datetime.now().utcnow() + timedelta(hours = 2)
+
 with open("groupmatrix.json") as f:
     group_matrix = json.load(f)
     groupid_to_chatids = defaultdict(set, setify(group_matrix.setdefault('groupid_to_chatids', dict())))
@@ -85,7 +87,7 @@ def post_content_to_groups(group_ids: List[str], message_ids: List[str], chat_id
     for group_id in group_ids:
         #ensure that there will not be posted to non-existent groups
         if group_id in groupid_to_group.keys(): 
-            groupid_to_group[group_id]['posted_messages'][chat_id][str(datetime.now())] = message_ids
+            groupid_to_group[group_id]['posted_messages'][chat_id][str(now())] = message_ids
     dump_string()
     return
 
@@ -99,10 +101,9 @@ weekdays = {'Monday': 0,
 
 def create_initial_date(weekday: str, hour: Union[str, int]) -> str:
     onDay = lambda date, day: date + timedelta(days=(day-date.weekday()+7)%7)
-    ret = onDay(datetime.now(), weekdays.get(weekday, 0))
+    ret = onDay(now(), weekdays.get(weekday, 0))
     ret = ret.replace(microsecond=0, second=0, minute=0, hour = int(hour))
-    ret = ret + timedelta(days = 7) if datetime.now() > ret else ret
-    print(ret)
+    ret = ret + timedelta(days = 7) if now() > ret else ret
     return str(ret)
 
 def to_string():
@@ -221,8 +222,6 @@ def set_targeted_group(message: types.Message, targeted_group: string):
     return
 
 def get_public_group_ids():
-    print([group_id for group_id, info in groupid_to_group.items() 
-            if info['is_private'] == 'no'])
     return [group_id for group_id, info in groupid_to_group.items() 
             if info['is_private'] == 'no']
 
@@ -244,7 +243,7 @@ def default_state_for_message(message: types.Message):
 
 def get_due_groups() -> List[str]:
     #update due date...
-    ret = [group_id for group_id, group in groupid_to_group.items() if datetime.strptime(group['update_due'],  '%Y-%m-%d %H:%M:%S') <= datetime.now()]
+    ret = [group_id for group_id, group in groupid_to_group.items() if datetime.strptime(group['update_due'],  '%Y-%m-%d %H:%M:%S') <= now()]
     update_due_groups(ret)
     return ret
 
