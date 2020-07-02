@@ -103,11 +103,14 @@ async def do_delete_group(message: types.Message):
 async def do_add(message: types.Message):
     if not backend.get_phase_from_message(message) in [Phase.default]:
         backend.default_state_for_message(message)
-    await bot.send_message(message.chat.id, 
-                           'Please send the message block you want your friends to receive! \nWhen you are done, finish with /done.',
-                            reply_markup = backend.create_keyboard(["/done" , "/abort"]))
+    
+    
+    await bot.send_message(message.chat.id, "Please select the group(s) you want to post your new content to. \nAfter the selection, continue with /done.", 
+                                   reply_markup = backend.create_keyboard(backend.get_groupids_for_chatid(str(message.chat.id)) + ["/done", "/abort"]))
+    
+    backend.set_phase_for_message(message, Phase.send_to_groups)
                            
-    backend.set_phase_for_message(message, Phase.add_messages)
+    
     pass
 
 #TODO keine weiteren Nachrichten mit / beginnen lassen
@@ -116,17 +119,6 @@ async def do_done(message: types.Message):
 
     if backend.get_phase_from_message(message) == Phase.add_messages:
         if backend.get_sent_message_ids_from_message(message) != []:
-            await bot.send_message(message.chat.id, "Alright. Now let's select the group(s) you want to post this to. \nAfter the selection, finish with /done.", 
-                                   reply_markup = backend.create_keyboard(backend.get_groupids_for_chatid(str(message.chat.id)) + ["/done", "/abort"]))
-            backend.set_phase_for_message(message, Phase.send_to_groups)
-        else:
-            await bot.send_message(message.chat.id, 
-                                   "A message block must consist of at least one message. \nPlease send some content before you proceed with /done. \nIf you have decided otherwise, you can use /abort.",
-                                    reply_markup = backend.create_keyboard(["/done" , "/abort"]))
-        return
-    elif backend.get_phase_from_message(message) == Phase.send_to_groups:
-        if backend.get_receiving_group_ids(message) != []:
-            #CHECKEN, ob der Gruppe bereits beigetreten wurde.
             receiving_group_string = reduce(lambda a,b: a+", "+ b, 
                                             backend.get_receiving_group_ids(message))
             await bot.send_message(message.chat.id, 
@@ -136,7 +128,20 @@ async def do_done(message: types.Message):
                                            backend.get_sent_message_ids_from_message(message), 
                                            str(message.chat.id))
             #STOREN!
-            backend.default_state_for_message(message)        
+            backend.default_state_for_message(message)     
+        else:
+            await bot.send_message(message.chat.id, 
+                                   "A message block must consist of at least one message. \nPlease send some content before you proceed with /done. \nIf you have decided otherwise, you can use /abort.",
+                                    reply_markup = backend.create_keyboard(["/done" , "/abort"]))
+        return
+    elif backend.get_phase_from_message(message) == Phase.send_to_groups:
+        if backend.get_receiving_group_ids(message) != []:
+            #CHECKEN, ob der Gruppe bereits beigetreten wurde.
+            await bot.send_message(message.chat.id, 
+                           'Please send the message block you want your friends to receive! \nWhen you are done, finish with /done.',
+                            reply_markup = backend.create_keyboard(["/done" , "/abort"]))
+            backend.set_phase_for_message(message, Phase.add_messages)
+               
         else:
             await bot.send_message(message.chat.id, 
                                    "Please send at least one group ID before you proceed with /done. \nIf you have decided otherwise, you can use /abort.", 
