@@ -263,6 +263,20 @@ async def do_handle_free_text_message(message: types.Message):
                                reply_markup = types.ReplyKeyboardRemove())
         backend.default_state_for_message(message)
 
+@dp.message_handler(content_types = types.ContentTypes.ANY)
+async def do_handle_free_message_type (message: types.Message):
+    if backend.get_phase_from_message (message) == Phase.add_messages:
+        #erwarte Nachrichten, bleib in Phase
+        backend.append_sent_message_ids_for_message(message)        
+        return
+    else:
+        await bot.send_message (message.chat.id,
+                                'I do not understand. Please try sending me a text message.',
+                                reply_markup = backend.create_keyboard(['/abort']))
+        return
+        #todo give correct keyboard when free message type was not expected
+
+
 
 async def post_messages():
     #TODO: RIGHT TIMES, ADD PERIOD TO DATASTRUCTURE
@@ -281,10 +295,11 @@ async def post_messages():
                 from_chat_id, message_ids = to_post
                 for rcv_id in backend.get_chatids_for_groupid(group_id):
                     
-                    for message_id in message_ids:
-                        await bot.send_message(rcv_id, 
+                    await bot.send_message(rcv_id, 
                                                f"📫\nHere's today's content from {group_id}",
                                                reply_markup = types.ReplyKeyboardRemove())
+                    for message_id in message_ids:
+                        
                         await bot.forward_message(rcv_id, 
                                                   from_chat_id, 
                                                   message_id)
