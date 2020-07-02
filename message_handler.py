@@ -9,6 +9,12 @@ from backend import Phase
 import backend
 import asyncio
 from functools import reduce
+import signal, sys
+
+def sigterm_handler(_signo, _stack_frame):
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, sigterm_handler)
 
 #HALLO von AWS
 
@@ -199,7 +205,7 @@ async def do_handle_free_text_message(message: types.Message):
                                    reply_markup = backend.create_keyboard(range(1, 8)))
             return
         await bot.send_message(message.chat.id,
-                               f"Alright. I will post new content to this group every {str(message.text)+' days' if str(message.txt) != 1 else 'daily'}.\nDo you want this group to be private? Private groups will not be suggested to new users of this bot.",
+                               f"Alright. I will post new content to this group {'every ' + str(message.text)+' days' if str(message.text) != '1' else 'daily'}.\nDo you want this group to be private? Private groups will not be suggested to new users of this bot.",
                                reply_markup = backend.create_keyboard(['yes', 'no']))
         backend.set_desired_group_period(message, str(message.text))
         backend.set_phase_for_message(message, Phase.new_group_desired_privacy)
@@ -316,4 +322,5 @@ if __name__ == '__main__':
         #asyncio.create_task(loop.run_in_executor(exec, funny_aio))
     finally:
         #to_string()
+        print(f"entered 'finally' block")
         backend.dump_string()
