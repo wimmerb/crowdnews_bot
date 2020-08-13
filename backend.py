@@ -5,6 +5,7 @@ import string
 import random
 import json
 import math
+import time
 from collections import defaultdict
 from aiogram import types
 from JSON_helper import setify, listify
@@ -87,7 +88,9 @@ def post_content_to_groups(group_ids: List[str], message_ids: List[str], chat_id
     for group_id in group_ids:
         #ensure that there will not be posted to non-existent groups
         if group_id in groupid_to_group.keys(): 
-            groupid_to_group[group_id]['posted_messages'][chat_id][str(now())] = message_ids
+            for message_id in message_ids:
+                time.sleep (0.001)
+                groupid_to_group[group_id]['posted_messages'][chat_id][str(now())] = [message_id]
     dump_string()
     return
 

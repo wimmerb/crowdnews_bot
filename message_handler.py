@@ -131,14 +131,14 @@ async def do_done(message: types.Message):
             backend.default_state_for_message(message)     
         else:
             await bot.send_message(message.chat.id, 
-                                   "A message block must consist of at least one message. \nPlease send some content before you proceed with /done. \nIf you have decided otherwise, you can use /abort.",
+                                   "You have sent no messages. \nPlease send some content before you proceed with /done. \nIf you have decided otherwise, you can use /abort.",
                                     reply_markup = backend.create_keyboard(["/done" , "/abort"]))
         return
     elif backend.get_phase_from_message(message) == Phase.send_to_groups:
         if backend.get_receiving_group_ids(message) != []:
             #CHECKEN, ob der Gruppe bereits beigetreten wurde.
             await bot.send_message(message.chat.id, 
-                           'Please send the message block you want your friends to receive! \nWhen you are done, finish with /done.',
+                           'Please send a message (or multiple messages) you want your friends to receive! \nWhen you are done, finish with /done.',
                             reply_markup = backend.create_keyboard(["/done" , "/abort"]))
             backend.set_phase_for_message(message, Phase.add_messages)
                
