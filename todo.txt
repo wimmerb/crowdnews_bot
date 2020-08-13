@@ -3,3 +3,5 @@ better help screen, delete/leave
 /mygroups command
 
 /add -> frag erst nach der Gruppe
+
+backend sollte ein dict haben, wo die Phase einem jeweiligen Keyboard zugeordnet wird
